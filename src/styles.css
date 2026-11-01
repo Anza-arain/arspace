@@ -1690,3 +1690,61 @@ select {
 .heart {
   color: #d23c4b;
 }
+
+/* Phone AR: the whole screen is the "open camera" button */
+.ar-takeover {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  grid-template-rows: 1fr auto auto auto;
+  gap: 20px;
+  padding: calc(24px + env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-right, 0px)) calc(24px + env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px));
+  background: var(--ink);
+  color: var(--bg);
+}
+.ar-go {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  border: 2px dashed color-mix(in srgb, var(--bg) 35%, transparent);
+  border-radius: var(--radius-lg);
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  text-align: center;
+}
+.ar-go svg {
+  fill: currentColor;
+  margin-bottom: 6px;
+}
+.ar-go strong {
+  font: 800 clamp(1.8rem, 8vw, 2.4rem) / 1.05 var(--display);
+  letter-spacing: -0.03em;
+}
+.ar-go span {
+  opacity: 0.75;
+}
+.ar-go:active {
+  background: color-mix(in srgb, var(--bg) 8%, transparent);
+}
+.ar-steps {
+  margin: 0;
+  padding-left: 1.3em;
+  display: grid;
+  gap: 8px;
+  font-size: 0.95rem;
+  opacity: 0.85;
+}
+.ar-failed {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: color-mix(in srgb, #c2412d 30%, transparent);
+  font-size: 0.9rem;
+}
+.ar-peek {
+  color: inherit;
+  justify-self: center;
+  opacity: 0.8;
+}
