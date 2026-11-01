@@ -1748,3 +1748,79 @@ select {
   justify-self: center;
   opacity: 0.8;
 }
+
+/* Camera view: back camera with the model drawn on top */
+.camview {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  background: #000;
+  overflow: hidden;
+}
+.camview-video,
+.camview-stage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.camview-video {
+  object-fit: cover;
+}
+.camview-stage {
+  touch-action: none;
+}
+.camview-stage canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+.camview-hint,
+.camview-error {
+  position: absolute;
+  left: max(16px, env(safe-area-inset-left, 0px));
+  right: max(16px, env(safe-area-inset-right, 0px));
+  top: calc(16px + env(safe-area-inset-top, 0px));
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 0.95rem;
+  text-align: center;
+  pointer-events: none;
+}
+.camview-error {
+  top: 40%;
+  background: rgba(150, 40, 30, 0.85);
+}
+.camview-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px max(16px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.55));
+}
+.camview-bar button {
+  min-width: 52px;
+  height: 52px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 0;
+  background: rgba(255, 255, 255, 0.92);
+  color: #1c2420;
+  font: 600 1rem var(--body);
+  cursor: pointer;
+}
+.camview-bar .camview-close {
+  background: #2348d4;
+  color: #fff;
+}
+.ar-alt {
+  border-color: color-mix(in srgb, var(--bg) 40%, transparent);
+  color: inherit;
+}

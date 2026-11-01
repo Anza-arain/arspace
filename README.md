@@ -12,6 +12,7 @@ Built with **React, Three.js, `<model-viewer>` and WebXR**. No 3D files ship wit
 - **Live configurator**: colour, material and product options rebuild the model instantly; price updates with each choice
 - **Real dimensions** in centimetres, measured from the model's bounding box
 - **AR preview**: the configured model is exported to GLB and opened in `<model-viewer>`, which uses WebXR on Android Chrome and Quick Look on iOS Safari, placed on the floor at 1:1 scale
+- **Camera view on any phone**: when a phone has no full AR (or the QR link opens in a scanner's built-in browser), the back camera opens straight away with the piece drawn over the room; drag to move, pinch to resize, twist to turn
 - **QR hand-off**: on a laptop, the AR dialog shows a QR code that opens the same configuration on a phone
 - **Catalog** with category filter, text search, price slider and sorting
 - **Accounts**: sign up, sign in and sign out, with inline validation, a password strength meter and show/hide password

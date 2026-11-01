@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import QRCode from 'qrcode'
+import CameraView from './CameraView.jsx'
 import { exportGLB } from '../three/scene.js'
 import { money, priceOf } from '../data/products.js'
 
@@ -19,6 +20,11 @@ export default function ARModal({ product, cfg, model, url, onClose }) {
   const [arFailed, setArFailed] = useState(false)
   const [peek, setPeek] = useState(false) // user chose to look at the 3D view first
   const phone = window.matchMedia('(pointer: coarse)').matches
+  const [lite, setLite] = useState(false) // camera view without floor tracking
+  // Phones without full AR (or where it fails) go straight to the camera view.
+  useEffect(() => {
+    if (phone && (canAR === false || arFailed)) setLite(true)
+  }, [phone, canAR, arFailed])
 
   useEffect(() => {
     if (!dialog.current.open) dialog.current.showModal()
@@ -96,10 +102,10 @@ export default function ARModal({ product, cfg, model, url, onClose }) {
               <p>Tap “Place in my room”, point your camera at the floor and move the phone slowly until the model appears. It is shown at true size.</p>
             </>
           )}
-          {canAR === false && phone && (
-            <p className="notice">
-              This browser can't open the camera view. Open the page in Chrome on Android (with Google Play Services for AR) or Safari on iPhone.
-            </p>
+          {phone && canAR !== null && (
+            <button type="button" className="btn btn-primary btn-block" onClick={() => setLite(true)}>
+              Open camera view
+            </button>
           )}
           {canAR !== true && !phone && (
             <>
@@ -129,12 +135,16 @@ export default function ARModal({ product, cfg, model, url, onClose }) {
             <li>The {product.name.split(' ').slice(-1)[0].toLowerCase()} appears at its real size. Tap to place it.</li>
             <li>Drag to move it around the room, twist with two fingers to turn it.</li>
           </ol>
-          {arFailed && <p className="ar-failed">The camera view didn't start. On Android, install or update Google Play Services for AR. On iPhone, use Safari.</p>}
+          <button type="button" className="btn btn-quiet ar-alt" onClick={() => setLite(true)}>
+            Use the simple camera view
+          </button>
           <button type="button" className="link-btn ar-peek" onClick={() => setPeek(true)}>
             See it in 3D first
           </button>
         </div>
       )}
+
+      {lite && <CameraView product={product} cfg={cfg} onClose={() => setLite(false)} />}
     </dialog>
   )
 }
