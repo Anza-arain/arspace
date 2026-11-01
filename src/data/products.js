@@ -8,6 +8,8 @@ const FABRICS = [
   { name: 'Ink', hex: '#2B3442' },
   { name: 'Rust', hex: '#9A4A2C' },
   { name: 'Fog', hex: '#A9B0AE' },
+  { name: 'Teal', hex: '#2F5F5C' },
+  { name: 'Mustard', hex: '#B98A2E' },
 ]
 
 const GLAZES = [
@@ -17,10 +19,30 @@ const GLAZES = [
   { name: 'Chalk', hex: '#E8E4DA' },
   { name: 'Basalt', hex: '#3A3B3A' },
 ]
+const PAINTS = [
+  { name: 'Chalk', hex: '#E8E4DA' },
+  { name: 'Sage', hex: '#8E9C84' },
+  { name: 'Cobalt', hex: '#2C4A9A' },
+  { name: 'Terra', hex: '#A4583A' },
+]
+
+const BEDDING = [
+  { name: 'Linen', hex: '#E4DED2' },
+  { name: 'Sage', hex: '#A7B39C' },
+  { name: 'Clay', hex: '#B9805F' },
+  { name: 'Charcoal', hex: '#45484A' },
+]
+
+const WOODS = [
+  { key: 'oak', name: 'Natural oak', price: 0 },
+  { key: 'walnut', name: 'Walnut', price: 120 },
+  { key: 'ash', name: 'Black ash', price: 60 },
+]
+
 // Same glazes, different default, so the catalog doesn't open on one colour.
 const startAt = (list, i) => [...list.slice(i), ...list.slice(0, i)]
 
-export const CATEGORIES = ['Seating', 'Tables', 'Lighting', 'Storage', 'Decor', 'Audio']
+export const CATEGORIES = ['Sofas', 'Seating', 'Beds', 'Tables', 'Desks', 'Lighting', 'Storage', 'Decor', 'Audio']
 
 export const PRODUCTS = [
   {
@@ -43,7 +65,7 @@ export const PRODUCTS = [
   {
     id: 'dune',
     name: 'Dune Sofa',
-    category: 'Seating',
+    category: 'Sofas',
     price: 1690,
     blurb: 'Feather-wrapped cushions on a low timber plinth. Seat depth fits a full lie-down.',
     colorLabel: 'Upholstery',
@@ -157,6 +179,150 @@ export const PRODUCTS = [
       { key: 'steel', name: 'Aluminium', price: 20 },
     ],
     option: { label: 'Size', choices: [{ name: 'Mini', price: 0 }, { name: 'Standard', price: 110 }] },
+  },
+  {
+    id: 'haven',
+    name: 'Haven Sectional',
+    category: 'Sofas',
+    price: 2490,
+    blurb: 'An L-shaped sofa with a long chaise for stretching out. Seats four, sleeps one.',
+    colorLabel: 'Upholstery',
+    colors: startAt(FABRICS, 5),
+    finishLabel: 'Feet',
+    finishes: WOODS,
+    option: { label: 'Chaise side', choices: [{ name: 'Left', price: 0 }, { name: 'Right', price: 0 }] },
+    featured: true,
+  },
+  {
+    id: 'loom',
+    name: 'Loom Loveseat',
+    category: 'Sofas',
+    price: 1190,
+    blurb: 'A compact two-seater for small living rooms and bedrooms, on slim tapered legs.',
+    colorLabel: 'Upholstery',
+    colors: startAt(FABRICS, 3),
+    finishLabel: 'Legs',
+    finishes: WOODS,
+    option: { label: 'Arms', choices: [{ name: 'Rounded', price: 0 }, { name: 'Square', price: 0 }] },
+  },
+  {
+    id: 'mara',
+    name: 'Mara Rolled-Arm Sofa',
+    category: 'Sofas',
+    price: 1890,
+    blurb: 'A classic three-seater with rolled arms, a tight back and turned legs.',
+    colorLabel: 'Upholstery',
+    colors: startAt(FABRICS, 2),
+    finishLabel: 'Legs',
+    finishes: [
+      { key: 'walnut', name: 'Walnut', price: 0 },
+      { key: 'oak', name: 'Natural oak', price: 0 },
+      { key: 'brass', name: 'Brushed brass', price: 140 },
+    ],
+    option: { label: 'Length', choices: [{ name: '210 cm', price: 0 }, { name: '240 cm', price: 250 }] },
+  },
+  {
+    id: 'rest',
+    name: 'Rest Upholstered Bed',
+    category: 'Beds',
+    price: 1390,
+    blurb: 'A soft channel-tufted headboard on a low upholstered frame. Mattress not included.',
+    colorLabel: 'Upholstery',
+    colors: startAt(FABRICS, 6),
+    finishLabel: 'Feet',
+    finishes: WOODS,
+    option: { label: 'Size', choices: [{ name: 'Queen', price: 0 }, { name: 'King', price: 260 }] },
+    featured: true,
+  },
+  {
+    id: 'timber',
+    name: 'Timber Slat Bed',
+    category: 'Beds',
+    price: 1190,
+    blurb: 'Solid timber frame with a slatted headboard. Bedding shown is sold separately.',
+    colorLabel: 'Bedding',
+    colors: startAt(BEDDING, 1),
+    finishLabel: 'Frame',
+    finishes: WOODS,
+    option: {
+      label: 'Size',
+      choices: [
+        { name: 'Double', price: 0 },
+        { name: 'Queen', price: 150 },
+        { name: 'King', price: 320 },
+      ],
+    },
+  },
+  {
+    id: 'atelier',
+    name: 'Atelier Study Desk',
+    category: 'Desks',
+    price: 640,
+    blurb: 'A study desk with three deep drawers on one side and room for a monitor and lamp.',
+    colorLabel: 'Drawers',
+    colors: startAt(PAINTS, 1),
+    finishLabel: 'Top',
+    finishes: WOODS,
+    option: { label: 'Shelf', choices: [{ name: 'No shelf', price: 0 }, { name: 'With shelf', price: 120 }] },
+    featured: true,
+  },
+  {
+    id: 'nook',
+    name: 'Nook Writing Desk',
+    category: 'Desks',
+    price: 390,
+    blurb: 'A slim desk on steel hairpin legs with a shallow drawer. Fits a 50 cm deep corner.',
+    colors: [],
+    finishLabel: 'Top',
+    finishes: [
+      { key: 'oak', name: 'Natural oak', price: 0 },
+      { key: 'walnut', name: 'Walnut', price: 60 },
+      { key: 'marble', name: 'Carrara marble', price: 180 },
+    ],
+    option: { label: 'Width', choices: [{ name: '100 cm', price: 0 }, { name: '120 cm', price: 40 }] },
+  },
+  {
+    id: 'arlo',
+    name: 'Arlo Desk Chair',
+    category: 'Seating',
+    price: 420,
+    blurb: 'A bent-wood desk chair with a padded seat. Pairs with every desk in the store.',
+    colorLabel: 'Seat pad',
+    colors: FABRICS,
+    finishLabel: 'Shell',
+    finishes: WOODS,
+    option: { label: 'Base', choices: [{ name: 'Four legs', price: 0 }, { name: 'Swivel', price: 60 }] },
+  },
+  {
+    id: 'slab',
+    name: 'Slab Dining Table',
+    category: 'Tables',
+    price: 1290,
+    blurb: 'A thick-topped dining table on two trestle legs, so chairs slide in anywhere.',
+    colors: [],
+    finishLabel: 'Material',
+    finishes: [
+      { key: 'oak', name: 'Natural oak', price: 0 },
+      { key: 'walnut', name: 'Walnut', price: 220 },
+      { key: 'ash', name: 'Black ash', price: 120 },
+    ],
+    option: { label: 'Seats', choices: [{ name: '4 seats, 160 cm', price: 0 }, { name: '6 seats, 220 cm', price: 280 }] },
+  },
+  {
+    id: 'orb',
+    name: 'Orb Coffee Table',
+    category: 'Tables',
+    price: 560,
+    blurb: 'A low coffee table on a solid drum base, in stone or timber.',
+    colors: [],
+    finishLabel: 'Material',
+    finishes: [
+      { key: 'walnut', name: 'Walnut', price: 0 },
+      { key: 'travertine', name: 'Travertine', price: 40 },
+      { key: 'marble', name: 'Carrara marble', price: 90 },
+      { key: 'oak', name: 'Natural oak', price: 0 },
+    ],
+    option: { label: 'Shape', choices: [{ name: 'Round', price: 0 }, { name: 'Oval', price: 60 }] },
   },
 ]
 

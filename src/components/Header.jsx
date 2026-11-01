@@ -93,8 +93,9 @@ export default function Header({ user, cartCount, savedCount, route, onSearch, o
               <summary>Shop</summary>
               <div className="menu-panel">{shopLinks}</div>
             </details>
-            <a href="#shop-seating">Seating</a>
-            <a href="#shop-lighting">Lighting</a>
+            <a href="#shop-sofas">Sofas</a>
+            <a href="#shop-beds">Beds</a>
+            <a href="#shop-desks">Desks</a>
             <a href="#how">How AR works</a>
           </nav>
 

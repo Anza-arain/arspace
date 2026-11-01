@@ -122,10 +122,11 @@ export default function App() {
           </div>
           <nav aria-label="Shop">
             <h2>Shop</h2>
-            <a href="#shop-seating">Seating</a>
+            <a href="#shop-sofas">Sofas</a>
+            <a href="#shop-beds">Beds</a>
             <a href="#shop-tables">Tables</a>
+            <a href="#shop-desks">Study desks</a>
             <a href="#shop-lighting">Lighting</a>
-            <a href="#shop-storage">Storage</a>
           </nav>
           <nav aria-label="Your account">
             <h2>Your account</h2>
