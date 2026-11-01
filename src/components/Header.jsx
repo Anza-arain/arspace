@@ -79,7 +79,6 @@ export default function Header({ user, cartCount, savedCount, route, onSearch, o
               <p className="menu-title">Shop</p>
               {shopLinks}
               <p className="menu-title">More</p>
-              <a href="#how">How AR works</a>
               {user ? <a href="#account">My account</a> : <a href="#login">Sign in or create account</a>}
             </div>
           </details>
@@ -96,7 +95,6 @@ export default function Header({ user, cartCount, savedCount, route, onSearch, o
             <a href="#shop-sofas">Sofas</a>
             <a href="#shop-beds">Beds</a>
             <a href="#shop-desks">Desks</a>
-            <a href="#how">How AR works</a>
           </nav>
 
           <form className="header-search desktop-only" role="search" onSubmit={search}>

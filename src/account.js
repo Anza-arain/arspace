@@ -67,6 +67,9 @@ export function passwordStrength(pw) {
   return s
 }
 
+export const MAX_QTY = 99
+export const clampQty = (n) => Math.max(1, Math.min(MAX_QTY, Math.floor(Number(n)) || 1))
+
 export const FREE_SHIPPING = 500
 export const SHIPPING = { standard: { name: 'Standard, 5 to 7 days', price: 39 }, express: { name: 'Express, 2 days', price: 79 } }
 
@@ -112,13 +115,13 @@ export function useAccount() {
     login,
     logout: () => setEmail(null),
     toggleSaved: (id) => update((u) => ({ ...u, saved: u.saved.includes(id) ? u.saved.filter((x) => x !== id) : [...u.saved, id] })),
-    addToCart: (key, id, cfg) =>
+    addToCart: (key, id, cfg, qty = 1) =>
       update((u) => {
         const hit = u.cart.find((l) => l.key === key)
-        const cart = hit ? u.cart.map((l) => (l === hit ? { ...l, qty: Math.min(l.qty + 1, 9) } : l)) : [...u.cart, { key, id, cfg, qty: 1 }]
+        const cart = hit ? u.cart.map((l) => (l === hit ? { ...l, qty: clampQty(l.qty + qty) } : l)) : [...u.cart, { key, id, cfg, qty: clampQty(qty) }]
         return { ...u, cart }
       }),
-    setQty: (key, qty) => update((u) => ({ ...u, cart: u.cart.map((l) => (l.key === key ? { ...l, qty: Math.max(1, Math.min(qty, 9)) } : l)) })),
+    setQty: (key, qty) => update((u) => ({ ...u, cart: u.cart.map((l) => (l.key === key ? { ...l, qty: clampQty(qty) } : l)) })),
     removeLine: (key) => update((u) => ({ ...u, cart: u.cart.filter((l) => l.key !== key) })),
     placeOrder(address, delivery) {
       const totals = cartTotals(user.cart, delivery)

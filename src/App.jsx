@@ -58,7 +58,7 @@ export default function App() {
     }
     if (type === 'cart') {
       account.addToCart(...args)
-      notify('Added to cart', '#cart', 'View cart')
+      notify(args[3] > 1 ? `Added ${args[3]} to cart` : 'Added to cart', '#cart', 'View cart')
     }
   }
 
@@ -91,7 +91,7 @@ export default function App() {
     user,
     saved,
     toggleSaved: (id) => gate('Sign in to save pieces to your account.', 'save', [id]),
-    addToCart: (product, cfg) => gate('Sign in to add pieces to your cart.', 'cart', [toHash(product, cfg), product.id, cfg]),
+    addToCart: (product, cfg, qty = 1) => gate('Sign in to add pieces to your cart.', 'cart', [toHash(product, cfg), product.id, cfg, qty]),
     notify,
   }
 

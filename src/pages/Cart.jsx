@@ -1,6 +1,7 @@
 import { byId, money, priceOf } from '../data/products.js'
 import { cartTotals, FREE_SHIPPING } from '../account.js'
 import { useThumbnail } from '../components/ProductCard.jsx'
+import { Qty } from '../components/Options.jsx'
 
 export const configText = (p, cfg) =>
   [p.colors[cfg.color]?.name, p.finishes[cfg.finish].name, p.option.choices[cfg.option].name].filter(Boolean).join(', ')
@@ -19,15 +20,7 @@ function Line({ line, account }) {
         </a>
         <p className="muted">{configText(p, line.cfg)}</p>
         <div className="line-actions">
-          <div className="qty" role="group" aria-label={`Quantity of ${p.name}`}>
-            <button type="button" onClick={() => account.setQty(line.key, line.qty - 1)} disabled={line.qty <= 1} aria-label="Decrease quantity">
-              −
-            </button>
-            <output aria-live="polite">{line.qty}</output>
-            <button type="button" onClick={() => account.setQty(line.key, line.qty + 1)} disabled={line.qty >= 9} aria-label="Increase quantity">
-              +
-            </button>
-          </div>
+          <Qty value={line.qty} onChange={(n) => account.setQty(line.key, n)} label={`Quantity of ${p.name}`} />
           <button type="button" className="link-btn" onClick={() => account.removeLine(line.key)}>
             Remove
           </button>

@@ -1,6 +1,6 @@
 // Run with: node src/account.test.js
 import assert from 'node:assert/strict'
-import { cartTotals, hashPassword, newSalt, validateSignup } from './account.js'
+import { cartTotals, clampQty, hashPassword, newSalt, validateSignup } from './account.js'
 
 // Same password + salt gives the same hash; a different salt does not.
 const salt = newSalt()
@@ -23,5 +23,13 @@ assert.deepEqual(cartTotals(cart), { count: 3, subtotal: 2105, shipping: 0, tota
 assert.equal(cartTotals(cart, 'express').shipping, 79)
 assert.deepEqual(cartTotals([cart[1]]), { count: 1, subtotal: 85, shipping: 39, total: 124 })
 assert.equal(cartTotals([]).total, 0)
+
+// Quantity box: typed or stepped values stay within 1 to 99.
+assert.equal(clampQty(25), 25)
+assert.equal(clampQty('12'), 12)
+assert.equal(clampQty(0), 1)
+assert.equal(clampQty(250), 99)
+assert.equal(clampQty('abc'), 1)
+assert.equal(clampQty(3.7), 3)
 
 console.log('account ok')

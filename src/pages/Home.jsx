@@ -56,12 +56,6 @@ function Hero() {
   )
 }
 
-const STEPS = [
-  ['Configure', 'Colour, material and size update the model instantly. The price follows.'],
-  ['Inspect', 'Orbit and zoom. Dimensions are measured from the model itself, in centimetres.'],
-  ['Place', 'On Android and iPhone the model opens in AR at 1:1 scale on your floor.'],
-]
-
 function Catalog({ saved, toggleSaved, category: fromLink, query, setQuery }) {
   const [category, setCategory] = useState(fromLink ?? 'All')
   useEffect(() => {
@@ -147,16 +141,6 @@ export default function Home(props) {
   return (
     <>
       <Hero />
-      <section className="steps wrap" id="how" aria-label="How the AR preview works">
-        <ol>
-          {STEPS.map(([title, text]) => (
-            <li key={title}>
-              <h3>{title}</h3>
-              <p>{text}</p>
-            </li>
-          ))}
-        </ol>
-      </section>
       <Catalog {...props} />
     </>
   )
