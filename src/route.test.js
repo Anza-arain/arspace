@@ -26,6 +26,11 @@ assert.equal(parseHash('#shop-lighting').category, 'Lighting')
 assert.equal(parseHash('#shop-sofas').page, 'shop')
 assert.equal(parseHash('#shop-nothing').category, 'All')
 
+// A category added in the admin panel resolves from its slug.
+import { updateSettings } from './store.js'
+updateSettings((st) => ({ ...st, categories: [...st.categories, 'Home office'] }))
+assert.equal(parseHash('#shop-home-office').category, 'Home office')
+
 // Round trip.
 const cfg = { color: 1, finish: 2, option: 0 }
 assert.deepEqual(parseHash('#' + toHash(byId.fold, cfg)).cfg, cfg)

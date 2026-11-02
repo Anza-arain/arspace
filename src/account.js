@@ -4,6 +4,7 @@
 // functions for API calls (e.g. Supabase Auth) to make accounts real.
 import { useCallback, useEffect, useState } from 'react'
 import { byId, priceOf } from './data/products.js'
+import { findCoupon, getSettings, salePrice } from './store.js'
 
 const USERS = 'arspace:users'
 const SESSION = 'arspace:session'
@@ -73,14 +74,23 @@ export const clampQty = (n) => Math.max(1, Math.min(MAX_QTY, Math.floor(Number(n
 export const FREE_SHIPPING = 500
 export const SHIPPING = { standard: { name: 'Standard, 5 to 7 days', price: 39 }, express: { name: 'Express, 2 days', price: 79 } }
 
-// Prices always come from the catalog, never from what was stored in the cart.
-export function cartTotals(cart, delivery = 'standard') {
-  const lines = cart.filter((l) => byId[l.id])
-  const subtotal = lines.reduce((n, l) => n + priceOf(byId[l.id], l.cfg) * l.qty, 0)
-  const count = lines.reduce((n, l) => n + l.qty, 0)
-  const base = SHIPPING[delivery].price
-  const shipping = count === 0 ? 0 : delivery === 'standard' && subtotal >= FREE_SHIPPING ? 0 : base
-  return { count, subtotal, shipping, total: subtotal + shipping }
+// Prices always come from the catalog (with the admin's offers), never from what was stored in the cart.
+// `coupon` is a code or { code }; it is re-checked against settings, so an ended code gives no discount.
+export function cartTotals(cart, delivery = 'standard', coupon = null, s = getSettings()) {
+  let count = 0
+  let subtotal = 0
+  let base = 0
+  for (const l of cart) {
+    const p = byId[l.id]
+    if (!p) continue
+    count += l.qty
+    subtotal += salePrice(p, l.cfg, s) * l.qty
+    base += priceOf(p, l.cfg) * l.qty
+  }
+  const c = findCoupon(coupon?.code ?? coupon, s)
+  const discount = c ? Math.round((subtotal * c.percent) / 100) : 0
+  const shipping = count === 0 ? 0 : delivery === 'standard' && subtotal - discount >= FREE_SHIPPING ? 0 : SHIPPING[delivery].price
+  return { count, subtotal, savings: base - subtotal, discount, shipping, total: subtotal - discount + shipping }
 }
 
 // Demo admin account, so the admin panel works on a fresh browser.
@@ -154,17 +164,22 @@ export function useAccount() {
       }),
     setQty: (key, qty) => update((u) => ({ ...u, cart: u.cart.map((l) => (l.key === key ? { ...l, qty: clampQty(qty) } : l)) })),
     removeLine: (key) => update((u) => ({ ...u, cart: u.cart.filter((l) => l.key !== key) })),
-    placeOrder(address, delivery) {
-      const totals = cartTotals(user.cart, delivery)
+    placeOrder(address, delivery, coupon = null) {
+      const s = getSettings()
+      const c = findCoupon(coupon?.code ?? coupon, s)
+      const at = Date.now()
       const order = {
-        id: 'AS' + Date.now().toString(36).toUpperCase(),
-        date: Date.now(),
+        id: 'AS' + at.toString(36).toUpperCase(),
+        date: at,
+        status: 'Processing',
+        history: [{ status: 'Processing', at }],
         delivery,
         address,
-        totals,
+        coupon: c ? { code: c.code, percent: c.percent } : null,
+        totals: cartTotals(user.cart, delivery, c, s),
         lines: user.cart
           .filter((l) => byId[l.id])
-          .map((l) => ({ ...l, name: byId[l.id].name, price: priceOf(byId[l.id], l.cfg) })),
+          .map(({ key, id, cfg, qty }) => ({ key, id, cfg, qty, name: byId[id].name, price: salePrice(byId[id], cfg, s), basePrice: priceOf(byId[id], cfg) })),
       }
       update((u) => ({ ...u, cart: [], orders: [order, ...u.orders] }))
       return order

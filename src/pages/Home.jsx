@@ -1,255 +1,383 @@
-import { useCallback, useState } from 'react'
-import Stage from '../three/Stage.jsx'
-import { ROOMS, buildRoom, roomLines, roomTotal } from '../three/rooms.js'
-import ProductCard, { useThumbnail } from '../components/ProductCard.jsx'
-import { PRODUCTS, byId, money } from '../data/products.js'
+import { useCallback, useState } from "react";
+import Stage from "../three/Stage.jsx";
+import { ROOMS, buildRoom, roomLines, roomTotal } from "../three/rooms.js";
+import ProductCard, { useThumbnail } from "../components/ProductCard.jsx";
+import { PRODUCTS, byId, money } from "../data/products.js";
+import { useSettings, productsIn, offerOf } from "../store.js";
+import { toHash } from "../route.js";
 
-const HOME_CATEGORIES = ['Sofas', 'Beds', 'Tables', 'Desks', 'Seating', 'Lighting']
-const TRENDING = PRODUCTS.filter((p) => p.featured).slice(0, 4)
-const PREMIUM = PRODUCTS.filter((p) => p.price >= 1390).sort((a, b) => b.price - a.price).slice(0, 3)
-const NEW_IN = ['loom', 'nook', 'arlo', 'orb'].map((id) => byId[id])
+const TRENDING = PRODUCTS.filter((p) => p.featured).slice(0, 4);
+const NEW_IN = ["loom", "nook", "arlo", "orb"]
+  .map((id) => byId[id])
+  .filter(Boolean);
+const slug = (c) => c.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
-function Hero({ addRoom }) {
-  const [roomId, setRoomId] = useState('living')
-  const room = ROOMS.find((r) => r.id === roomId)
-  const build = useCallback(() => buildRoom(room), [room])
-  const lines = roomLines(room)
+// One editorial block per room. cfg objects live here so thumbnails stay cached.
+const STORIES = [
+  {
+    room: "Living room",
+    id: "haven",
+    cfg: { color: 0, finish: 1, option: 0 },
+    title: "Sink in.",
+    text: "The Haven sofa is deep enough for a nap, firm enough for your coffee. Kick your feet up on the chaise, the dog will find his own corner.",
+    link: "Shop sofas",
+    href: "#shop-sofas",
+  },
+  {
+    room: "Bedroom",
+    id: "rest",
+    cfg: { color: 2, finish: 1, option: 0 },
+    title: "Beds for the long sleep-in after a long week.",
+    text: "A padded headboard to lean on with a book, a frame that stays quiet when you turn over, and room underneath for the spare blankets.",
+    link: "Shop beds",
+    href: "#shop-beds",
+  },
+  {
+    room: "Study",
+    id: "atelier",
+    cfg: { color: 1, finish: 1, option: 1 },
+    title: "A desk for the work that comes home with you.",
+    text: "Space for the laptop, the lamp and the four o’clock tea. The shelf keeps the notebooks off the top, so Friday ends with a clear desk.",
+    link: "Shop desks",
+    href: "#shop-desks",
+  },
+  {
+    room: "Dining",
+    id: "slab",
+    cfg: { color: 0, finish: 1, option: 1 },
+    title: "A table that remembers every dinner.",
+    text: "Solid wood that takes the hot dishes, the homework and the long Sunday lunches, and gets better looking with every mark.",
+    link: "Shop tables",
+    href: "#shop-tables",
+  },
+];
+
+const AR_PIECE = { id: "orbit", cfg: { color: 3, finish: 1, option: 0 } };
+
+function Hero({ banner, addRoom }) {
+  const [roomId, setRoomId] = useState(ROOMS[0].id);
+  const room = ROOMS.find((r) => r.id === roomId);
+  const build = useCallback(() => buildRoom(room), [room]);
+  const lines = roomLines(room);
 
   return (
-    <section className="hero">
-      <div className="wrap hero-grid">
-        <div className="hero-copy">
-          <h1>
-            Furniture for every room,
-            <br />
-            made to fit yours.
-          </h1>
-          <p className="lede">
-            Furnova is a furniture store where every sofa, bed, table and desk is a live 3D model. Pick the fabric, wood and size, check the exact
-            measurements, then see the piece standing in your own room through your phone camera before you order.
-          </p>
-          <div className="hero-actions">
-            <a className="btn btn-primary" href="#shop">
-              Shop all furniture
-            </a>
-            <a className="btn btn-quiet" href="#rooms">
-              Explore rooms
-            </a>
-          </div>
-          <dl className="hero-facts">
-            <div>
-              <dt>Pieces</dt>
-              <dd>{PRODUCTS.length}</dd>
-            </div>
-            <div>
-              <dt>Fabrics and finishes</dt>
-              <dd>20+</dd>
-            </div>
-            <div>
-              <dt>Delivery</dt>
-              <dd>Free over $500</dd>
-            </div>
-          </dl>
+    <section className="hero" aria-label="Furnova rooms">
+      <div className="hero-copy">
+        <h1>{banner.title}</h1>
+        <p>{banner.text}</p>
+        <div className="hero-actions">
+          <a className="btn btn-primary" href="#shop">
+            {banner.cta}
+          </a>
+          <a className="ul hero-walk" href="#rooms">
+            Walk through the rooms
+          </a>
         </div>
+      </div>
 
-        <figure className="hero-room" id="rooms">
-          <div className="room-tabs" role="tablist" aria-label="Rooms">
-            {ROOMS.map((r) => (
-              <button key={r.id} type="button" role="tab" aria-selected={r.id === roomId} onClick={() => setRoomId(r.id)}>
-                {r.name}
-              </button>
-            ))}
+      <div className="hero-scene">
+        <div className="room-tabs" role="tablist" aria-label="Choose a room">
+          {ROOMS.map((r) => (
+            <button
+              key={r.id}
+              type="button"
+              role="tab"
+              aria-selected={r.id === roomId}
+              onClick={() => setRoomId(r.id)}
+            >
+              {r.name}
+            </button>
+          ))}
+        </div>
+        <Stage
+          className="stage hero-stage"
+          build={build}
+          id={room.id}
+          zoom={1.65}
+          label={`3D ${room.name.toLowerCase()}. Drag to look around.`}
+        />
+        <div className="room-strip">
+          <div className="room-pieces">
+            <p>In this room</p>
+            <ul>
+              {lines.map((l) => (
+                <li key={l.key}>
+                  <a className="ul" href={`#${l.key}`}>
+                    {l.qty > 1
+                      ? `${l.product.name} (${l.qty})`
+                      : l.product.name}
+                  </a>
+                </li>
+              ))}
+            </ul>
           </div>
-          <Stage className="stage room-stage" build={build} id={room.id} zoom={1.65} label={`3D ${room.name.toLowerCase()} set. Drag to look around.`} />
-          <figcaption className="room-card">
-            <div className="room-pieces">
-              <p className="room-title">In this {room.name.toLowerCase()}</p>
-              <ul>
-                {lines.map((l) => (
-                  <li key={l.key}>
-                    <a href={`#${l.key}`}>
-                      {l.qty > 1 && `${l.qty} × `}
-                      {l.product.name}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="room-buy">
-              <p>
-                <small className="muted">Room total</small>
-                <strong className="price">{money(roomTotal(room))}</strong>
-              </p>
-              <button type="button" className="btn btn-primary" onClick={() => addRoom(lines)}>
-                Add the room to cart
-              </button>
-            </div>
-          </figcaption>
+          <div className="room-buy">
+            <p>
+              <span>Room total</span>
+              <strong className="price">{money(roomTotal(room))}</strong>
+            </p>
+            <button
+              type="button"
+              className="btn btn-quiet"
+              onClick={() => addRoom(lines)}
+            >
+              Add the room to cart
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function CategoryTile({ category, s }) {
+  const items = productsIn(category, s);
+  const lead = items.find((p) => p.featured) ?? items[0];
+  const src = useThumbnail(lead);
+  return (
+    <a className="cat-tile" href={`#shop-${slug(category)}`}>
+      <span className="cat-img" data-reveal>
+        {src && (
+          <img src={src} alt="" width="560" height="700" loading="lazy" />
+        )}
+      </span>
+      <span className="cat-text">
+        <strong>{category}</strong>
+        <span>
+          {items.length} {items.length === 1 ? "piece" : "pieces"}
+        </span>
+      </span>
+    </a>
+  );
+}
+
+function Story({ story, flip }) {
+  const product = byId[story.id];
+  const src = useThumbnail(product, story.cfg);
+  return (
+    <article className={`story${flip ? " story-flip" : ""}`}>
+      <figure className="story-img" data-reveal>
+        {src && (
+          <img
+            src={src}
+            alt={`${product.name} in the ${story.room.toLowerCase()}`}
+            width="900"
+            height="900"
+            loading="lazy"
+          />
+        )}
+      </figure>
+      <div className="story-text">
+        <p className="story-room">{story.room}</p>
+        <h3 data-reveal="text">{story.title}</h3>
+        <p>{story.text}</p>
+        <a className="ul" href={story.href}>
+          {story.link}
+        </a>
+      </div>
+    </article>
+  );
+}
+
+function SeeItHome() {
+  const product = byId[AR_PIECE.id];
+  const src = useThumbnail(product, AR_PIECE.cfg);
+  const href = `#${toHash(product, AR_PIECE.cfg)}`;
+  return (
+    <section className="see-it" aria-labelledby="see-it-title">
+      <div className="wrap see-it-inner">
+        <div className="see-it-text">
+          <h2 id="see-it-title" data-reveal="text">
+            See it in your room
+          </h2>
+          <p className="see-it-lede">
+            Every piece here is a 3D model you can turn around and open up.
+            Point your phone at the floor and it stands there at its real size,
+            next to the radiator and the cat.
+          </p>
+          <ol className="steps">
+            <li>
+              <strong>Choose it</strong>
+              <span>
+                Pick the fabric, the wood and the size. The model changes as you
+                go.
+              </span>
+            </li>
+            <li>
+              <strong>Scan the code</strong>
+              <span>
+                Open “See it in your room” on the product page and scan the code
+                with your phone camera.
+              </span>
+            </li>
+            <li>
+              <strong>Place it</strong>
+              <span>
+                Set it down on your floor, walk around it, and check it clears
+                the door.
+              </span>
+            </li>
+          </ol>
+          <a className="ul" href={href}>
+            Try it with the {product.name}
+          </a>
+        </div>
+        <figure className="see-it-img" data-reveal>
+          {src && (
+            <img
+              src={src}
+              alt={`${product.name}, rendered in 3D`}
+              width="900"
+              height="900"
+              loading="lazy"
+            />
+          )}
         </figure>
       </div>
     </section>
-  )
+  );
 }
 
-const PERKS = [
-  ['Free delivery', 'On every order over $500, to your door.'],
-  ['30-day returns', 'Live with it for a month. Send it back if it is not right.'],
-  ['Made to order', 'Built in your fabric and wood, shipped in 2 to 3 weeks.'],
-  ['Secure checkout', 'Cash on delivery or bank transfer.'],
-]
-
-function CategoryTile({ category }) {
-  const lead = PRODUCTS.find((p) => p.category === category && p.featured) ?? PRODUCTS.find((p) => p.category === category)
-  const src = useThumbnail(lead)
-  const n = PRODUCTS.filter((p) => p.category === category).length
+function Row({ title, note, link, items, cardProps }) {
   return (
-    <a className="cat-tile" href={`#shop-${category.toLowerCase()}`}>
-      <span className="cat-img">{src && <img src={src} alt="" width="560" height="560" />}</span>
-      <span className="cat-text">
-        <strong>{category}</strong>
-        <small>
-          {n} {n === 1 ? 'piece' : 'pieces'}
-        </small>
-      </span>
-    </a>
-  )
-}
-
-const FEATURES = [
-  {
-    title: 'Make it yours',
-    text: 'Choose from fabrics, woods, stone and sizes. The 3D model and the price change the moment you do.',
-    icon: 'M4 20h4l10-10-4-4L4 16v4zm12.5-15.5 3 3 1.4-1.4a1 1 0 0 0 0-1.4l-1.6-1.6a1 1 0 0 0-1.4 0L16.5 4.5z',
-  },
-  {
-    title: 'See it in your room',
-    text: 'Scan the code on any product page. Your phone camera opens and the piece stands in your room at its real size.',
-    icon: 'M9 4 7.2 6H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-3.2L15 4H9zm3 5a4 4 0 1 1 0 8 4 4 0 0 1 0-8z',
-  },
-  {
-    title: 'Know it fits',
-    text: 'Every piece shows width, depth and height in centimetres, measured from the model itself.',
-    icon: 'M3 8h18v8H3V8zm2 2v4h2v-2h1v2h2v-3h1v3h2v-2h1v2h2v-3h1v3h1v-4H5z',
-  },
-]
-
-function Section({ title, link, children, className = '' }) {
-  return (
-    <section className={`wrap home-section ${className}`}>
+    <section className="home-section wrap">
       <div className="section-head">
-        <h2>{title}</h2>
+        <div>
+          <h2 data-reveal="text">{title}</h2>
+          {note && <p>{note}</p>}
+        </div>
         {link}
       </div>
-      {children}
+      <div className="home-grid">
+        {items.map((p, i) => (
+          <ProductCard key={p.id} product={p} index={i} {...cardProps} />
+        ))}
+      </div>
     </section>
-  )
+  );
 }
 
-export default function Home({ saved, toggleSaved, addToCart, addRoom, recent }) {
-  const cardProps = { saved, toggleSaved, addToCart }
-  const recentItems = recent.map((id) => byId[id]).filter(Boolean).slice(0, 4)
-  return (
-    <>
-      <Hero addRoom={addRoom} />
+export default function Home({
+  saved,
+  toggleSaved,
+  addToCart,
+  addRoom,
+  recent = [],
+}) {
+  const s = useSettings();
+  const cardProps = { saved, toggleSaved, addToCart };
+  // Whole rows of four only (admin order decides which come first); the rest are a click away in the shop.
+  const filled = s.categories.filter((c) => productsIn(c, s).length > 0);
+  const categories = filled.length > 4 ? filled.slice(0, Math.floor(filled.length / 4) * 4) : filled;
+  const onOffer = PRODUCTS.filter((p) => offerOf(p, s) > 0).slice(0, 8);
+  const bestOffer = Math.max(0, ...onOffer.map((p) => offerOf(p, s)));
+  const recentItems = recent
+    .map((id) => byId[id])
+    .filter(Boolean)
+    .slice(0, 4);
+  const shopLink = (label, href = "#shop") => (
+    <a className="ul section-link" href={href}>
+      {label}
+    </a>
+  );
 
-      <section className="benefits" aria-label="Why shop with Furnova">
-        <ul className="wrap">
-          {PERKS.map(([t, d]) => (
-            <li key={t}>
-              <strong>{t}</strong>
-              <span>{d}</span>
+  return (
+    <div className="home">
+      <Hero banner={s.banner} addRoom={addRoom} />
+
+      <section className="manifesto" aria-label="Our promise">
+        <div className="wrap">
+          <p data-reveal="text">
+            Made to be leaned on, spilled on and handed down.
+          </p>
+          <ul>
+            <li>
+              <strong>Free delivery over $500</strong>
+              <span>Carried in, unwrapped, and the cardboard taken away.</span>
             </li>
-          ))}
-        </ul>
+            <li>
+              <strong>30 days to live with it</strong>
+              <span>
+                If it doesn’t suit the room, we collect it and refund you.
+              </span>
+            </li>
+            <li>
+              <strong>Made to order in 2 to 3 weeks</strong>
+              <span>
+                Built in your fabric and wood, not pulled from a warehouse.
+              </span>
+            </li>
+          </ul>
+        </div>
       </section>
 
-      <Section
-        title="Shop by category"
-        link={
-          <a className="link-more" href="#shop">
-            View all
-          </a>
-        }
-      >
-        <div className="cat-grid">
-          {HOME_CATEGORIES.map((c) => (
-            <CategoryTile key={c} category={c} />
-          ))}
-        </div>
-      </Section>
-
-      <Section
-        title="Trending now"
-        link={
-          <a className="link-more" href="#shop">
-            Shop all
-          </a>
-        }
-      >
-        <div className="grid grid-4">
-          {TRENDING.map((p, i) => (
-            <ProductCard key={p.id} product={p} index={i} {...cardProps} />
-          ))}
-        </div>
-      </Section>
-
-      <section className="premium">
-        <div className="wrap">
+      {categories.length > 0 && (
+        <section className="home-section wrap" aria-labelledby="shop-by-title">
           <div className="section-head">
-            <div>
-              <h2>The premium edit</h2>
-              <p>Our largest pieces, in the richest fabrics and solid walnut.</p>
-            </div>
-            <a className="link-more" href="#shop">
-              See more
-            </a>
+            <h2 id="shop-by-title" data-reveal="text">
+              Shop by room and piece
+            </h2>
+            {shopLink("See everything")}
           </div>
-          <div className="grid grid-3">
-            {PREMIUM.map((p, i) => (
-              <ProductCard key={p.id} product={p} index={i} {...cardProps} />
+          <div className="cat-grid">
+            {categories.map((c) => (
+              <CategoryTile key={c} category={c} s={s} />
             ))}
           </div>
+        </section>
+      )}
+
+      <Row
+        title="Trending now"
+        note="What people are sitting on, sleeping in and eating at this month."
+        link={shopLink("Shop all")}
+        items={TRENDING}
+        cardProps={cardProps}
+      />
+
+      {onOffer.length > 0 && (
+        <Row
+          title="On offer now"
+          note={`Up to ${bestOffer}% off, while the workshop has them in.`}
+          link={shopLink("Shop all")}
+          items={onOffer}
+          cardProps={cardProps}
+        />
+      )}
+
+      <section
+        className="home-section stories"
+        id="rooms"
+        aria-labelledby="rooms-title"
+      >
+        <div className="wrap">
+          <h2 id="rooms-title" className="stories-title" data-reveal="text">
+            A walk through the rooms
+          </h2>
+          {STORIES.map((story, i) => (
+            <Story key={story.id} story={story} flip={i % 2 === 1} />
+          ))}
         </div>
       </section>
 
-      <Section title="Why people buy furniture from Furnova" className="features">
-        <ul className="feature-list">
-          {FEATURES.map((f) => (
-            <li key={f.title}>
-              <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
-                <path d={f.icon} />
-              </svg>
-              <h3>{f.title}</h3>
-              <p>{f.text}</p>
-            </li>
-          ))}
-        </ul>
-      </Section>
+      <SeeItHome />
 
-      <Section
+      <Row
         title="New in"
-        link={
-          <a className="link-more" href="#shop">
-            Shop new pieces
-          </a>
-        }
-      >
-        <div className="grid grid-4">
-          {NEW_IN.map((p, i) => (
-            <ProductCard key={p.id} product={p} index={i} {...cardProps} />
-          ))}
-        </div>
-      </Section>
+        note="Fresh from the workshop."
+        link={shopLink("Shop new pieces")}
+        items={NEW_IN}
+        cardProps={cardProps}
+      />
 
       {recentItems.length > 0 && (
-        <Section title="Recently viewed">
-          <div className="grid grid-4">
-            {recentItems.map((p, i) => (
-              <ProductCard key={p.id} product={p} index={i} {...cardProps} />
-            ))}
-          </div>
-        </Section>
+        <Row
+          title="Recently viewed"
+          note="Still thinking it over? Here’s where you left off."
+          items={recentItems}
+          cardProps={cardProps}
+        />
       )}
-    </>
-  )
+    </div>
+  );
 }

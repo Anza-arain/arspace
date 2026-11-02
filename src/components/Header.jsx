@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { CATEGORIES, PRODUCTS, money } from '../data/products.js'
+import { PRODUCTS, money } from '../data/products.js'
+import { useSettings, productsIn } from '../store.js'
 import { useThumbnail } from './ProductCard.jsx'
 
 const icon = {
@@ -7,7 +8,7 @@ const icon = {
   heart: 'M12 20.5s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.7c0 5.6-7.5 10.2-7.5 10.2z',
   bag: 'M7 8V7a5 5 0 0 1 10 0v1h3l-1 13H5L4 8h3zm2 0h6V7a3 3 0 0 0-6 0v1zm-2.9 2 .7 9h10.4l.7-9H6.1z',
   user: 'M12 4a4 4 0 1 1 0 8 4 4 0 0 1 0-8zm0 10c4.4 0 8 2 8 4.5V20H4v-1.5C4 16 7.6 14 12 14z',
-  menu: 'M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z',
+  menu: 'M4 7h16v1.6H4zm0 8.4h16V17H4z',
 }
 export const Icon = ({ d, size = 22 }) => (
   <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true">
@@ -16,7 +17,8 @@ export const Icon = ({ d, size = 22 }) => (
 )
 export const ICONS = icon
 
-const count = (c) => PRODUCTS.filter((p) => p.category === c).length
+// Category names become hash-safe slugs (letters, digits, hyphens).
+const slug = (c) => c.toLowerCase().replace(/[^a-z0-9]+/g, '-')
 const initials = (name) =>
   name
     .split(/\s+/)
@@ -24,6 +26,16 @@ const initials = (name) =>
     .slice(0, 2)
     .join('')
     .toUpperCase()
+
+// Centre links: label shown, category it opens.
+const NAV = [
+  ['Sofas', 'Sofas'],
+  ['Beds', 'Beds'],
+  ['Tables', 'Tables'],
+  ['Desks', 'Desks'],
+  ['Chairs', 'Seating'],
+  ['Lamps', 'Lighting'],
+]
 
 // Menus are native <details>; close them on outside click, Escape, or a link click.
 function useCloseMenus(ref) {
@@ -42,18 +54,14 @@ function useCloseMenus(ref) {
   }, [ref])
 }
 
-function CategoryTile({ category }) {
-  const lead = PRODUCTS.find((p) => p.category === category)
+function MegaFeature() {
+  const lead = PRODUCTS.find((p) => p.featured) ?? PRODUCTS[0]
   const src = useThumbnail(lead)
   return (
-    <a className="mega-tile" href={`#shop-${category.toLowerCase()}`}>
+    <a className="mega-feature" href={`#${lead.id}`}>
       <span className="mega-img">{src && <img src={src} alt="" width="560" height="560" />}</span>
-      <span>
-        <strong>{category}</strong>
-        <small className="muted">
-          {count(category)} {count(category) === 1 ? 'piece' : 'pieces'}
-        </small>
-      </span>
+      <span className="mega-feature-name">{lead.name}</span>
+      <span className="muted">From {money(lead.price)}</span>
     </a>
   )
 }
@@ -74,7 +82,7 @@ function Result({ p, active, onPick }) {
   )
 }
 
-// Search panel with live results. Opens from the search icon or Ctrl/Cmd + K.
+// Search panel with live results. Opens from the search button or Ctrl/Cmd + K.
 function Search({ open, onClose, onSearch }) {
   const dialog = useRef(null)
   const [q, setQ] = useState('')
@@ -114,7 +122,7 @@ function Search({ open, onClose, onSearch }) {
           autoFocus
           type="search"
           value={q}
-          placeholder="Search sofas, beds, walnut, marble…"
+          placeholder="Search sofas, beds, walnut, marble"
           aria-label="Search the store"
           aria-controls="search-results"
           onChange={(e) => {
@@ -128,7 +136,7 @@ function Search({ open, onClose, onSearch }) {
         />
         <kbd className="desktop-only">Esc</kbd>
       </form>
-      <p className="search-label">{q.trim() ? `${results.length ? results.length : 'No'} matches` : 'Trending now'}</p>
+      <p className="search-label">{q.trim() ? `${results.length ? results.length : 'No'} matches` : 'People are looking at'}</p>
       {results.length > 0 ? (
         <ul id="search-results" className="results" role="listbox">
           {results.map((p, i) => (
@@ -157,22 +165,39 @@ function Search({ open, onClose, onSearch }) {
   )
 }
 
-const NAV = ['Sofas', 'Beds', 'Tables', 'Desks']
-
-export default function Header({ user, cartCount, savedCount, route, onSearch, onLogout }) {
+export default function Header({ user, isAdmin, cartCount, savedCount, route, onSearch, onLogout }) {
   const ref = useRef(null)
+  const s = useSettings()
   const [searching, setSearching] = useState(false)
-  const [scrolled, setScrolled] = useState(false)
+  const [bar, setBar] = useState({ solid: false, hidden: false })
+  const [roll, setRoll] = useState(0)
+  const lastCount = useRef(cartCount)
   useCloseMenus(ref)
 
+  // Roll the bag number when something is added.
   useEffect(() => {
+    if (cartCount > lastCount.current) setRoll((r) => r + 1)
+    lastCount.current = cartCount
+  }, [cartCount])
+
+  useEffect(() => {
+    let lastY = scrollY
     const onKey = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault()
         setSearching(true)
       }
     }
-    const onScroll = () => setScrolled(scrollY > 8)
+    // Hide on scroll down, show on scroll up; solid after 80px. Never hide with a menu open.
+    const onScroll = () => {
+      const y = scrollY
+      const menuOpen = ref.current?.querySelector('details[open]')
+      const hidden = !menuOpen && y > 160 && y > lastY
+      if (Math.abs(y - lastY) > 4 || y < 80) {
+        setBar((b) => (b.hidden === hidden && b.solid === y > 80 ? b : { solid: y > 80, hidden }))
+        lastY = y
+      }
+    }
     addEventListener('keydown', onKey)
     addEventListener('scroll', onScroll, { passive: true })
     return () => {
@@ -183,26 +208,28 @@ export default function Header({ user, cartCount, savedCount, route, onSearch, o
 
   const here = (page) => (route.page === page ? 'page' : undefined)
   const inCat = (c) => (route.page === 'shop' && route.category === c ? 'page' : undefined)
+  const counted = s.categories.map((c) => [c, productsIn(c, s).length])
 
   return (
     <>
-      <p className="promo">Free delivery on orders over $500, and 30 days to return any piece.</p>
-      <header className="site-header" data-scrolled={scrolled || undefined} ref={ref}>
+      {s.banner.promo && <p className="promo">{s.banner.promo}</p>}
+      <header className="site-header" data-solid={bar.solid || undefined} data-hidden={bar.hidden || undefined} ref={ref} onFocus={() => bar.hidden && setBar((b) => ({ ...b, hidden: false }))}>
         <div className="wrap header-inner">
           <details className="menu mobile-only">
             <summary aria-label="Menu">
               <Icon d={icon.menu} />
             </summary>
             <div className="menu-panel drawer">
-              <a href="#shop">Shop all</a>
-              {CATEGORIES.map((c) => (
-                <a key={c} href={`#shop-${c.toLowerCase()}`}>
-                  {c} <span className="muted">{count(c)}</span>
+              <a href="#shop">All furniture</a>
+              {counted.map(([c, n]) => (
+                <a key={c} href={`#shop-${slug(c)}`}>
+                  {c} <span className="muted">{n}</span>
                 </a>
               ))}
               <p className="menu-title">Account</p>
-              {user ? <a href="#account">My account</a> : <a href="#login">Sign in or create account</a>}
+              {user ? <a href="#account">Your account</a> : <a href="#login">Sign in or create account</a>}
               <a href="#saved">Saved</a>
+              {isAdmin && <a href="#admin">Admin panel</a>}
             </div>
           </details>
 
@@ -213,20 +240,25 @@ export default function Header({ user, cartCount, savedCount, route, onSearch, o
           <nav className="main-nav desktop-only" aria-label="Main">
             <details className="menu mega">
               <summary aria-current={route.page === 'shop' && route.category === 'All' ? 'page' : undefined}>Shop</summary>
-              <div className="menu-panel mega-panel">
-                <div className="mega-grid">
-                  {CATEGORIES.slice(0, 8).map((c) => (
-                    <CategoryTile key={c} category={c} />
-                  ))}
+              <div className="mega-panel">
+                <div className="wrap mega-inner">
+                  <div className="mega-cats">
+                    <a className="mega-all" href="#shop">
+                      All furniture <span className="muted">{PRODUCTS.length}</span>
+                    </a>
+                    {counted.map(([c, n]) => (
+                      <a key={c} href={`#shop-${slug(c)}`}>
+                        {c} <span className="muted">{n}</span>
+                      </a>
+                    ))}
+                  </div>
+                  <MegaFeature />
                 </div>
-                <a className="mega-all" href="#shop">
-                  Shop all {PRODUCTS.length} pieces
-                </a>
               </div>
             </details>
-            {NAV.map((c) => (
-              <a key={c} href={`#shop-${c.toLowerCase()}`} aria-current={inCat(c)}>
-                {c}
+            {NAV.map(([label, c]) => (
+              <a key={label} className="ul" href={`#shop-${slug(c)}`} aria-current={inCat(c)}>
+                {label}
               </a>
             ))}
           </nav>
@@ -234,15 +266,21 @@ export default function Header({ user, cartCount, savedCount, route, onSearch, o
           <div className="header-icons">
             <button type="button" className="icon-btn search-btn" onClick={() => setSearching(true)} aria-label="Search (Ctrl K)">
               <Icon d={icon.search} />
-              <span className="desktop-only">Search</span>
+              <span className="wide-only" aria-hidden="true">
+                Search
+              </span>
             </button>
-            <a className="icon-btn" href="#saved" aria-label={`Saved, ${savedCount} items`} aria-current={here('saved')}>
+            <a className="icon-btn saved-btn" href="#saved" aria-label={`Saved, ${savedCount} items`} aria-current={here('saved')}>
               <Icon d={icon.heart} />
               {savedCount > 0 && <span className="badge">{savedCount}</span>}
             </a>
-            <a className="icon-btn" href="#cart" aria-label={`Cart, ${cartCount} items`} aria-current={here('cart')}>
+            <a className="icon-btn" href="#cart" aria-label={`Bag, ${cartCount} items`} aria-current={here('cart')}>
               <Icon d={icon.bag} />
-              {cartCount > 0 && <span className="badge">{cartCount}</span>}
+              {cartCount > 0 && (
+                <span key={roll} className="badge" data-roll={roll > 0 || undefined}>
+                  {cartCount}
+                </span>
+              )}
             </a>
             {user ? (
               <details className="menu account-menu">
@@ -254,18 +292,18 @@ export default function Header({ user, cartCount, savedCount, route, onSearch, o
                     <strong>{user.name}</strong>
                     <span className="muted">{user.email}</span>
                   </p>
-                  <a href="#account">My account</a>
+                  <a href="#account">Your account</a>
                   <a href="#account">Orders {user.orders.length > 0 && <span className="muted">{user.orders.length}</span>}</a>
                   <a href="#saved">Saved</a>
+                  {isAdmin && <a href="#admin">Admin panel</a>}
                   <button type="button" onClick={onLogout}>
                     Sign out
                   </button>
                 </div>
               </details>
             ) : (
-              <a className="icon-btn sign-in" href="#login">
+              <a className="icon-btn sign-in" href="#login" aria-label="Sign in">
                 <Icon d={icon.user} />
-                <span className="desktop-only">Sign in</span>
               </a>
             )}
           </div>

@@ -5,6 +5,7 @@ import './css/home.css'
 import './css/shop.css'
 import './css/commerce.css'
 import './css/admin.css'
+import './motion.js'
 import App from './App.jsx'
 
 createRoot(document.getElementById('root')).render(

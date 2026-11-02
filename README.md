@@ -8,6 +8,9 @@ Built with **React, Three.js, `<model-viewer>` and WebXR**. No 3D files ship wit
 
 ## Features
 
+- **Admin panel** (`#admin`): overview with revenue and order counts, process orders (Processing, Confirmed, Shipped, Delivered, Cancelled) with a status history, percent-off offers per product, coupon codes, new categories and moving products between them, and the home banner and promo line. Demo admin: `admin@furnova.store` / `Furnova@2026`.
+- **Offers and coupons in the shop**: sale prices with the old price struck through, coupon codes at checkout (try `WELCOME10`), and order status timelines for customers
+- **Design**: a crisp Danish showroom look (Jost, white and sand, black square buttons), scroll reveals and smooth page changes that respect reduced motion
 - **Room sets on the home page**: living room, bedroom, study and dining scenes built from catalog pieces, with a room total and one-click "Add the room to cart"
 - **Shop page** with category, price and material filters, sorting, and pagination
 - **Product cards** with Trending, Premium and New labels, colour dots that re-render the picture in that colour, and quick add to cart
@@ -38,6 +41,7 @@ npm run build      # static site in dist/
 node src/route.test.js     # URL parser self-check
 node src/account.test.js   # password hashing, validation, cart totals
 node src/paging.test.js    # shop pagination
+node src/admin-utils.test.js  # admin validation and order maths
 ```
 
 Deploy `dist/` to Vercel, Netlify or GitHub Pages. Hash routing means no server rewrites are needed.
@@ -62,6 +66,9 @@ src/
   components/Header.jsx promo bar, menus, search, cart and account menu
   three/rooms.js        furnished room sets for the home page
   paging.js             page numbers for the shop (+ paging.test.js)
+  store.js              admin settings: banner, categories, offers, coupons
+  admin-utils.js        admin validation and order maths (+ admin-utils.test.js)
+  motion.js             scroll reveals and page fades
   pages/                Home, Shop, Product, Saved, Auth (sign in / sign up), Cart, Checkout, Account + Order
 ```
 

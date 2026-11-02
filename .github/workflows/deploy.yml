@@ -28,7 +28,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: node src/route.test.js && node src/account.test.js && node src/paging.test.js
+      - run: node src/route.test.js && node src/account.test.js && node src/paging.test.js && node src/admin-utils.test.js
       - run: npm run build
         env:
           # QR codes and share links point at the live site.

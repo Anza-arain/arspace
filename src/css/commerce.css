@@ -246,19 +246,192 @@
   text-align: right;
 }
 .pill {
+  --tone: #c98a1d;
   display: inline-block;
   padding: 3px 10px;
   border-radius: 999px;
   font-size: 0.8rem;
   font-weight: 600;
-  background: color-mix(in srgb, #c98a1d 18%, transparent);
+  white-space: nowrap;
+  background: color-mix(in srgb, var(--tone) 20%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tone) 45%, transparent);
   color: var(--ink);
 }
-.pill-ok {
-  background: color-mix(in srgb, #2f8a55 20%, transparent);
+/* Semantic status tones; text stays var(--ink) so it reads in light and dark. */
+.status-confirmed {
+  --tone: #3a7bd5;
+}
+.status-shipped {
+  --tone: var(--accent);
+}
+.status-delivered {
+  --tone: #2f8a55;
+}
+.status-cancelled {
+  --tone: #c2412d;
+}
+.order > .pill {
   margin-bottom: 14px;
 }
 .order .lede {
   margin-top: 12px;
 }
 
+
+/* Offers and coupons */
+.line-price {
+  text-align: right;
+}
+.offer-price {
+  display: inline-grid;
+  justify-items: end;
+  gap: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.offer-price .was {
+  color: var(--muted);
+  font-size: 0.85em;
+}
+.offer-note {
+  color: var(--brass);
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+.summary .saving dd {
+  color: var(--accent);
+}
+.coupon {
+  display: grid;
+  gap: 6px;
+}
+.coupon label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.coupon-row {
+  display: flex;
+  gap: 8px;
+}
+.coupon-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+  text-transform: uppercase;
+}
+.coupon-row input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.coupon-row input[aria-invalid='true'] {
+  border-color: #c2412d;
+}
+.coupon-applied {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px dashed var(--accent);
+  font-size: 0.9rem;
+}
+
+/* Order status timeline */
+.timeline {
+  list-style: none;
+  margin: 24px 0 32px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  grid-auto-flow: column;
+}
+.step {
+  position: relative;
+  display: grid;
+  gap: 2px;
+  padding-top: 26px;
+  font-size: 0.9rem;
+}
+.step::before {
+  content: '';
+  position: absolute;
+  top: 7px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--line);
+}
+.step:first-child::before {
+  left: 8px;
+}
+.step:last-child::before {
+  right: auto;
+  width: 8px;
+}
+.step-done::before,
+.step-current::before {
+  background: var(--accent);
+}
+.step-dot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 2px solid var(--line);
+}
+.step-done .step-dot {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.step-current .step-dot {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+.step-todo {
+  color: var(--muted);
+}
+.step-cancelled .step-dot {
+  background: #c2412d;
+  border-color: #c2412d;
+}
+
+@media (max-width: 560px) {
+  /* Vertical timeline on phones. */
+  .timeline {
+    grid-auto-flow: row;
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .step {
+    padding: 0 0 0 28px;
+  }
+  .step::before {
+    top: 16px;
+    bottom: -14px;
+    left: 7px;
+    right: auto;
+    width: 2px;
+    height: auto;
+  }
+  .step:first-child::before {
+    left: 7px;
+  }
+  .step:last-child::before {
+    display: none;
+  }
+  .line:not(.line-plain) .line-price {
+    text-align: left;
+  }
+  .line:not(.line-plain) .offer-price {
+    justify-items: start;
+  }
+}

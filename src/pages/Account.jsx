@@ -1,9 +1,39 @@
-import { money } from '../data/products.js'
+import { byId, money } from '../data/products.js'
 import { SHIPPING } from '../account.js'
-import { configText } from './Cart.jsx'
-import { byId } from '../data/products.js'
+import { LinePrice, TotalsRows, configText } from './Cart.jsx'
 
 const date = (t) => new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+
+const statusOf = (o) => o.status ?? 'Processing'
+const Pill = ({ status }) => <span className={`pill status-${status.toLowerCase()}`}>{status}</span>
+
+const STEPS = ['Processing', 'Confirmed', 'Shipped', 'Delivered']
+
+// Steps with dates from the order's history; orders placed before history existed start at their order date.
+function Timeline({ order }) {
+  const history = order.history ?? [{ status: 'Processing', at: order.date }]
+  const when = (status) => history.findLast((h) => h.status === status)?.at
+  const status = statusOf(order)
+  const cancelled = status === 'Cancelled'
+  const current = STEPS.indexOf(status)
+  // A cancelled order shows only the steps it reached, then the cancellation.
+  const steps = cancelled ? [...STEPS.filter((st) => when(st)), 'Cancelled'] : STEPS
+  return (
+    <ol className="timeline" aria-label="Order status">
+      {steps.map((st, i) => {
+        const at = when(st)
+        const state = st === 'Cancelled' ? 'cancelled' : cancelled || i < current ? 'done' : i === current ? 'current' : 'todo'
+        return (
+          <li key={st} className={`step step-${state}`} aria-current={st === status ? 'step' : undefined}>
+            <span className="step-dot" aria-hidden="true" />
+            <strong>{st}</strong>
+            <small className="muted">{at ? date(at) : state === 'todo' ? 'Not yet' : ''}</small>
+          </li>
+        )
+      })}
+    </ol>
+  )
+}
 
 export function Account({ account, onLogout }) {
   const { user } = account
@@ -57,7 +87,7 @@ export function Account({ account, onLogout }) {
                   <td>{date(o.date)}</td>
                   <td>{o.lines.map((l) => l.name).join(', ')}</td>
                   <td>
-                    <span className="pill">Processing</span>
+                    <Pill status={statusOf(o)} />
                   </td>
                   <td className="num price">{money(o.totals.total)}</td>
                 </tr>
@@ -93,11 +123,12 @@ export function Order({ order, user }) {
   const a = order.address
   return (
     <section className="wrap page order">
-      <p className="pill pill-ok">Order placed</p>
+      <Pill status={statusOf(order)} />
       <h1 className="page-title">Thank you, {user.name.split(' ')[0]}.</h1>
       <p className="lede">
-        Order <strong>{order.id}</strong> is confirmed. We'll email {user.email} when it ships.
+        Order <strong>{order.id}</strong> was placed on {date(order.date)}. We'll email {user.email} when it ships.
       </p>
+      <Timeline order={order} />
       <div className="two-col">
         <ul className="lines">
           {order.lines.map((l) => (
@@ -108,7 +139,9 @@ export function Order({ order, user }) {
                 </h3>
                 <p className="muted">{byId[l.id] ? configText(byId[l.id], l.cfg) : ''}</p>
               </div>
-              <p className="price line-price">{money(l.price * l.qty)}</p>
+              <div className="line-price">
+                <LinePrice p={byId[l.id]} cfg={l.cfg} qty={l.qty} sale={l.price} base={l.basePrice ?? l.price} />
+              </div>
             </li>
           ))}
         </ul>
@@ -134,10 +167,9 @@ export function Order({ order, user }) {
               <dt>Payment</dt>
               <dd>{a.payment === 'bank' ? 'Bank transfer' : 'Cash on delivery'}</dd>
             </div>
-            <div className="total">
-              <dt>Total</dt>
-              <dd>{money(order.totals.total)}</dd>
-            </div>
+          </dl>
+          <dl>
+            <TotalsRows totals={order.totals} coupon={order.coupon && `${order.coupon.code} (${order.coupon.percent}% off)`} />
           </dl>
           <a className="btn btn-quiet btn-block" href="#account">
             View all orders

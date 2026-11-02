@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { byId, money, priceOf } from '../data/products.js'
-import { cartTotals, SHIPPING } from '../account.js'
-import { Summary, configText } from './Cart.jsx'
+import { byId, money } from '../data/products.js'
+import { cartTotals, FREE_SHIPPING, SHIPPING } from '../account.js'
+import { findCoupon, useSettings } from '../store.js'
+import { LinePrice, Summary, configText } from './Cart.jsx'
 
 const COUNTRIES = ['Pakistan', 'United Arab Emirates', 'Saudi Arabia', 'United Kingdom', 'United States', 'Other']
 
@@ -9,8 +10,29 @@ export default function Checkout({ account }) {
   const { user } = account
   const [delivery, setDelivery] = useState('standard')
   const [payment, setPayment] = useState('cod')
+  const [code, setCode] = useState('')
+  const [applied, setApplied] = useState('')
+  const [codeError, setCodeError] = useState('')
+  const s = useSettings()
   const cart = user.cart.filter((l) => byId[l.id])
-  const totals = cartTotals(cart, delivery)
+  // Re-checked on every render, so a code the admin ends drops off before the order is placed.
+  const coupon = findCoupon(applied, s)
+  const totals = cartTotals(cart, delivery, coupon, s)
+  const couponError = codeError || (applied && !coupon ? "That code isn't valid or has ended." : '')
+
+  function applyCoupon(e) {
+    e.preventDefault()
+    const c = findCoupon(code, s)
+    if (c) {
+      setApplied(c.code)
+      setCode('')
+      setCodeError('')
+    } else setCodeError(code.trim() ? "That code isn't valid or has ended." : 'Enter a coupon code.')
+  }
+  function removeCoupon() {
+    setApplied('')
+    setCodeError('')
+  }
 
   if (!cart.length)
     return (
@@ -29,7 +51,7 @@ export default function Checkout({ account }) {
   function submit(e) {
     e.preventDefault()
     const f = Object.fromEntries(new FormData(e.currentTarget))
-    const order = account.placeOrder({ ...f, payment }, delivery)
+    const order = account.placeOrder({ ...f, payment }, delivery, coupon)
     location.hash = 'order-' + order.id
   }
 
@@ -92,7 +114,7 @@ export default function Checkout({ account }) {
                   <input type="radio" name="delivery" value={key} checked={delivery === key} onChange={() => setDelivery(key)} />
                   <span>
                     <strong>{s.name}</strong>
-                    <small>{key === 'standard' && totals.subtotal >= 500 ? 'Free' : money(s.price)}</small>
+                    <small>{key === 'standard' && totals.subtotal - totals.discount >= FREE_SHIPPING ? 'Free' : money(s.price)}</small>
                   </span>
                 </label>
               ))}
@@ -121,7 +143,41 @@ export default function Checkout({ account }) {
           </fieldset>
         </form>
 
-        <Summary totals={totals} delivery={delivery}>
+        <Summary totals={totals} delivery={delivery} coupon={coupon?.code}>
+          <form className="coupon" onSubmit={applyCoupon} noValidate>
+            {coupon ? (
+              <p className="coupon-applied">
+                <span>
+                  <strong>{coupon.code}</strong> applied, {coupon.percent}% off
+                </span>
+                <button type="button" className="link-btn" onClick={removeCoupon}>
+                  Remove
+                </button>
+              </p>
+            ) : (
+              <>
+                <label htmlFor="co-coupon">Coupon code</label>
+                <div className="coupon-row">
+                  <input
+                    id="co-coupon"
+                    value={code}
+                    onChange={(e) => (setCode(e.target.value), setCodeError(''))}
+                    autoComplete="off"
+                    autoCapitalize="characters"
+                    spellCheck="false"
+                    aria-invalid={couponError ? 'true' : undefined}
+                    aria-describedby={couponError ? 'co-coupon-error' : undefined}
+                  />
+                  <button className="btn btn-quiet">Apply</button>
+                </div>
+              </>
+            )}
+            {couponError && (
+              <p className="error" id="co-coupon-error" role="alert">
+                {couponError}
+              </p>
+            )}
+          </form>
           <ul className="mini-lines">
             {cart.map((l) => (
               <li key={l.key}>
@@ -129,7 +185,7 @@ export default function Checkout({ account }) {
                   {l.qty} × {byId[l.id].name}
                   <small className="muted">{configText(byId[l.id], l.cfg)}</small>
                 </span>
-                <span className="price">{money(priceOf(byId[l.id], l.cfg) * l.qty)}</span>
+                <LinePrice p={byId[l.id]} cfg={l.cfg} qty={l.qty} s={s} />
               </li>
             ))}
           </ul>

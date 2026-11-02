@@ -9,7 +9,10 @@
 //   #order-AS1X2Y     order confirmation
 //   #shop             catalog page
 //   #shop-lighting    catalog filtered to a category
-import { byId, CATEGORIES, DEFAULT_CFG } from './data/products.js'
+import { byId, DEFAULT_CFG } from './data/products.js'
+import { getSettings } from './store.js'
+
+export const slug = (category) => category.toLowerCase().replace(/[^a-z0-9]+/g, '-')
 
 const KEYS = { c: 'color', m: 'finish', o: 'option' }
 const PAGES = ['saved', 'login', 'signup', 'account', 'cart', 'checkout', 'admin']
@@ -20,7 +23,8 @@ export function parseHash(hash) {
   if (h.startsWith('order-')) return { page: 'order', id: h.slice(6) }
   if (h === 'shop' || h === 'catalog') return { page: 'shop', category: 'All' }
   if (h.startsWith('shop-')) {
-    const category = CATEGORIES.find((c) => c.toLowerCase() === h.slice(5))
+    // Includes categories the admin added, e.g. "Home office" -> #shop-home-office.
+    const category = getSettings().categories.find((c) => slug(c) === h.slice(5))
     return { page: 'shop', category: category ?? 'All' }
   }
   const [id, ...parts] = h.split('-')
