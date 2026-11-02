@@ -328,6 +328,25 @@ export const PRODUCTS = [
 
 export const byId = Object.fromEntries(PRODUCTS.map((p) => [p.id, p]))
 
+// Merchandising labels shown on cards.
+const NEW_IN = new Set(['loom', 'nook', 'arlo', 'orb', 'timber', 'slab'])
+export function badgeOf(p) {
+  if (p.featured) return 'Trending'
+  if (p.price >= 1500) return 'Premium'
+  if (NEW_IN.has(p.id)) return 'New'
+  return null
+}
+
+// Every finish key a product offers, for the material filter.
+export const MATERIALS = [
+  { key: 'oak', name: 'Oak' },
+  { key: 'walnut', name: 'Walnut' },
+  { key: 'ash', name: 'Black ash' },
+  { key: 'marble', name: 'Marble' },
+  { key: 'travertine', name: 'Travertine' },
+  { key: 'brass', name: 'Brass' },
+]
+
 export const DEFAULT_CFG = { color: 0, finish: 0, option: 0 }
 
 export function priceOf(p, cfg) {

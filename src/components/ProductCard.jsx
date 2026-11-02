@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react'
-import { DEFAULT_CFG, money } from '../data/products.js'
+import { useEffect, useMemo, useState } from 'react'
+import { DEFAULT_CFG, badgeOf, money } from '../data/products.js'
 import { thumbnail } from '../three/scene.js'
+import { toHash } from '../route.js'
 
 export function useThumbnail(product, cfg = DEFAULT_CFG, delay = 0) {
   const [src, setSrc] = useState(null)
   useEffect(() => {
-    // Stagger renders so the first paint is not blocked by eight WebGL draws.
+    if (!product) return
+    // Stagger renders so the first paint is not blocked by a row of WebGL draws.
     const t = setTimeout(() => setSrc(thumbnail(product, cfg)), delay)
     return () => clearTimeout(t)
   }, [product, cfg, delay])
@@ -23,30 +25,56 @@ export function SaveButton({ id, saved, toggleSaved, className = '' }) {
   )
 }
 
-export default function ProductCard({ product, index, saved, toggleSaved }) {
-  const src = useThumbnail(product, DEFAULT_CFG, 60 + index * 40)
+// Product card. Pointing at (or tapping) a colour dot re-renders the picture in that
+// colour, and the card then links to the piece in that colour.
+export default function ProductCard({ product, index = 0, saved, toggleSaved, addToCart }) {
+  const [color, setColor] = useState(0)
+  const cfg = useMemo(() => ({ ...DEFAULT_CFG, color }), [color])
+  const src = useThumbnail(product, cfg, 60 + index * 40)
+  const badge = badgeOf(product)
+  const href = `#${toHash(product, cfg)}`
+  const shown = product.colors.slice(0, 5)
+
   return (
     <article className="card">
-      <a className="card-link" href={`#${product.id}`}>
-        <div className="card-plinth">
-          {src ? <img src={src} alt="" width="560" height="560" /> : <div className="card-loading" aria-hidden="true" />}
+      <div className="card-media">
+        <a className="card-plinth" href={href} tabIndex={-1} aria-hidden="true">
+          {src ? <img src={src} alt="" width="560" height="560" /> : <span className="card-loading" />}
+        </a>
+        {badge && <span className={`tag tag-${badge.toLowerCase()}`}>{badge}</span>}
+        <SaveButton id={product.id} saved={saved} toggleSaved={toggleSaved} className="card-save" />
+        {addToCart && (
+          <button type="button" className="quick-add" onClick={() => addToCart(product, cfg)}>
+            Add to cart
+          </button>
+        )}
+      </div>
+      <div className="card-body">
+        <p className="card-cat">{product.category}</p>
+        <h3>
+          <a href={href}>{product.name}</a>
+        </h3>
+        <div className="card-foot">
+          <span className="price">{money(product.price)}</span>
+          {shown.length > 0 && (
+            <div className="card-dots" role="group" aria-label="Colours">
+              {shown.map((c, i) => (
+                <button
+                  key={c.name}
+                  type="button"
+                  style={{ background: c.hex }}
+                  aria-label={c.name}
+                  aria-pressed={i === color}
+                  onMouseEnter={() => setColor(i)}
+                  onFocus={() => setColor(i)}
+                  onClick={() => setColor(i)}
+                />
+              ))}
+              {product.colors.length > 5 && <span className="more-dots">+{product.colors.length - 5}</span>}
+            </div>
+          )}
         </div>
-        <div className="card-text">
-          <h3>{product.name}</h3>
-          <p className="card-meta">
-            <span>{product.category}</span>
-            <span className="price">from {money(product.price)}</span>
-          </p>
-        </div>
-      </a>
-      {product.colors.length > 0 && (
-        <ul className="card-dots" aria-label={`${product.colors.length} colours`}>
-          {product.colors.map((c) => (
-            <li key={c.name} style={{ background: c.hex }} title={c.name} />
-          ))}
-        </ul>
-      )}
-      <SaveButton id={product.id} saved={saved} toggleSaved={toggleSaved} className="card-save" />
+      </div>
     </article>
   )
 }

@@ -1,7 +1,7 @@
 import ProductCard from '../components/ProductCard.jsx'
 import { byId, money } from '../data/products.js'
 
-export default function Saved({ saved, toggleSaved }) {
+export default function Saved({ saved, toggleSaved, addToCart }) {
   const items = saved.map((id) => byId[id]).filter(Boolean)
   const total = items.reduce((n, p) => n + p.price, 0)
   return (
@@ -17,7 +17,7 @@ export default function Saved({ saved, toggleSaved }) {
       {items.length ? (
         <div className="grid">
           {items.map((p, i) => (
-            <ProductCard key={p.id} product={p} index={i} saved={saved} toggleSaved={toggleSaved} />
+            <ProductCard key={p.id} product={p} index={i} saved={saved} toggleSaved={toggleSaved} addToCart={addToCart} />
           ))}
         </div>
       ) : (

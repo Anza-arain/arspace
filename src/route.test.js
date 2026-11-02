@@ -4,6 +4,8 @@ import { parseHash, toHash } from './route.js'
 import { byId } from './data/products.js'
 
 assert.deepEqual(parseHash(''), { page: 'home', anchor: '' })
+assert.deepEqual(parseHash('#shop'), { page: 'shop', category: 'All' })
+assert.deepEqual(parseHash('#catalog'), { page: 'shop', category: 'All' })
 assert.deepEqual(parseHash('#saved'), { page: 'saved' })
 
 const r = parseHash('#orbit-c2-m1-o1')
@@ -21,6 +23,7 @@ assert.equal(parseHash('#orbit-c1').ar, false)
 assert.deepEqual(parseHash('#cart'), { page: 'cart' })
 assert.deepEqual(parseHash('#order-AS12XY'), { page: 'order', id: 'AS12XY' })
 assert.equal(parseHash('#shop-lighting').category, 'Lighting')
+assert.equal(parseHash('#shop-sofas').page, 'shop')
 assert.equal(parseHash('#shop-nothing').category, 'All')
 
 // Round trip.

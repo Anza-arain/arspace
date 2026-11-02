@@ -138,7 +138,7 @@ export default function Auth({ mode, account, message }) {
         </form>
 
         <p className="switch">
-          {signup ? 'Already have an account? ' : 'New to ARSpace? '}
+          {signup ? 'Already have an account? ' : 'New to Furnova? '}
           <a href={signup ? '#login' : '#signup'}>{signup ? 'Sign in' : 'Create an account'}</a>
         </p>
         <p className="fine-print">Demo store: accounts are kept in this browser only and passwords are stored as salted hashes. Use a password you don't use anywhere else.</p>

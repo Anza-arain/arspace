@@ -8,7 +8,8 @@ const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)'
 
 // Interactive Three.js viewer. Rebuilds the model when the configuration changes,
 // keeps the camera where the user left it unless the product itself changes.
-export default function Stage({ product, cfg, onModel, className, label }) {
+// Pass `product` + `cfg` for one piece, or `build` + `id` for a composed scene.
+export default function Stage({ product, cfg, build, id, zoom = 1, onModel, className, label }) {
   const host = useRef(null)
   const kit = useRef(null)
 
@@ -57,12 +58,12 @@ export default function Stage({ product, cfg, onModel, className, label }) {
         scene.add(model)
         this.model = model
         if (productId !== this.productId) {
-          fit(model, camera, controls)
+          fit(model, camera, controls, this.zoom)
           this.productId = productId
         }
       },
       reset() {
-        fit(this.model, camera, controls)
+        fit(this.model, camera, controls, this.zoom)
       },
     }
 
@@ -78,10 +79,11 @@ export default function Stage({ product, cfg, onModel, className, label }) {
   }, [])
 
   useEffect(() => {
-    const model = buildProduct(product, cfg)
-    kit.current.setModel(model, product.id)
+    const model = build ? build() : buildProduct(product, cfg)
+    kit.current.zoom = zoom
+    kit.current.setModel(model, id ?? product.id)
     onModel?.(model, () => kit.current.reset())
-  }, [product, cfg, onModel])
+  }, [product, cfg, build, id, zoom, onModel])
 
-  return <div ref={host} className={className} role="img" aria-label={label ?? `3D view of ${product.name}. Drag to rotate, scroll or pinch to zoom.`} />
+  return <div ref={host} className={className} role="img" aria-label={label ?? `3D view of ${product?.name}. Drag to rotate, scroll or pinch to zoom.`} />
 }

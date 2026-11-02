@@ -36,7 +36,7 @@ export function createStudio(renderer) {
   scene.add(floor)
 
   // Fit the shadow camera and camera distance to the model.
-  function fit(object, camera, controls) {
+  function fit(object, camera, controls, zoom = 1) {
     const box = new THREE.Box3().setFromObject(object)
     const size = box.getSize(new THREE.Vector3())
     const center = box.getCenter(new THREE.Vector3())
@@ -48,7 +48,7 @@ export function createStudio(renderer) {
     key.position.copy(center).add(new THREE.Vector3(radius * 3, radius * 5, radius * 2.5))
     key.target.position.copy(center)
     if (camera) {
-      const dist = radius / Math.sin((camera.fov * Math.PI) / 360) * 1.05
+      const dist = (radius / Math.sin((camera.fov * Math.PI) / 360)) * (1.05 / zoom)
       const dir = new THREE.Vector3(0.9, 0.55, 1.25).normalize()
       camera.position.copy(center).addScaledVector(dir, dist)
       camera.near = dist / 100

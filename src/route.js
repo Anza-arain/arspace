@@ -6,6 +6,7 @@
 //   #orbit-c2-m1-o0-ar  same, opening straight into the AR view (used by the QR code)
 //   #login #signup #account #cart #checkout   store pages
 //   #order-AS1X2Y     order confirmation
+//   #shop             catalog page
 //   #shop-lighting    catalog filtered to a category
 import { byId, CATEGORIES, DEFAULT_CFG } from './data/products.js'
 
@@ -16,9 +17,10 @@ export function parseHash(hash) {
   const h = hash.replace(/^#/, '')
   if (PAGES.includes(h)) return { page: h }
   if (h.startsWith('order-')) return { page: 'order', id: h.slice(6) }
+  if (h === 'shop' || h === 'catalog') return { page: 'shop', category: 'All' }
   if (h.startsWith('shop-')) {
     const category = CATEGORIES.find((c) => c.toLowerCase() === h.slice(5))
-    return { page: 'home', anchor: 'catalog', category: category ?? 'All' }
+    return { page: 'shop', category: category ?? 'All' }
   }
   const [id, ...parts] = h.split('-')
   const product = byId[id]

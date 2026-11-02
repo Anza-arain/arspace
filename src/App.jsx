@@ -3,6 +3,7 @@ import { parseHash, toHash } from './route.js'
 import { cartTotals, useAccount } from './account.js'
 import Header from './components/Header.jsx'
 import Home from './pages/Home.jsx'
+import Shop from './pages/Shop.jsx'
 import Product from './pages/Product.jsx'
 import Saved from './pages/Saved.jsx'
 import Auth from './pages/Auth.jsx'
@@ -27,6 +28,28 @@ export default function App() {
   const [query, setQuery] = useState('')
   const [pending, setPending] = useState(null) // action a guest tried before signing in
   const back = useRef('') // where to return after signing in
+  const [recent, setRecent] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('furnova:recent')) ?? []
+    } catch {
+      return []
+    }
+  })
+
+  // Remember the last pieces looked at, newest first, for "Recently viewed".
+  const viewing = route.page === 'product' ? route.product.id : null
+  useEffect(() => {
+    if (!viewing) return
+    setRecent((r) => {
+      const next = [viewing, ...r.filter((id) => id !== viewing)].slice(0, 8)
+      try {
+        localStorage.setItem('furnova:recent', JSON.stringify(next))
+      } catch {
+        /* not kept */
+      }
+      return next
+    })
+  }, [viewing])
 
   useEffect(() => {
     const onHash = () => setRoute(parseHash(location.hash))
@@ -60,6 +83,10 @@ export default function App() {
       account.addToCart(...args)
       notify(args[3] > 1 ? `Added ${args[3]} to cart` : 'Added to cart', '#cart', 'View cart')
     }
+    if (type === 'room') {
+      for (const l of args) account.addToCart(l.key, l.product.id, l.cfg, l.qty)
+      notify(`Added ${args.reduce((n, l) => n + l.qty, 0)} pieces to cart`, '#cart', 'View cart')
+    }
   }
 
   // Guests are sent to sign in; the action they tried runs right after.
@@ -92,6 +119,7 @@ export default function App() {
     saved,
     toggleSaved: (id) => gate('Sign in to save pieces to your account.', 'save', [id]),
     addToCart: (product, cfg, qty = 1) => gate('Sign in to add pieces to your cart.', 'cart', [toHash(product, cfg), product.id, cfg, qty]),
+    addRoom: (lines) => gate('Sign in to add this room to your cart.', 'room', lines),
     notify,
   }
 
@@ -104,7 +132,8 @@ export default function App() {
   else if (route.page === 'checkout') page = <Checkout account={account} />
   else if (route.page === 'account') page = <Account account={account} onLogout={logout} />
   else if (route.page === 'order') page = <Order order={user.orders.find((o) => o.id === route.id)} user={user} />
-  else page = <Home {...store} category={route.category} query={query} setQuery={setQuery} />
+  else if (route.page === 'shop') page = <Shop {...store} category={route.category} query={query} setQuery={setQuery} />
+  else page = <Home {...store} recent={recent} />
 
   return (
     <>
@@ -116,12 +145,13 @@ export default function App() {
         <div className="wrap footer-grid">
           <div>
             <a className="wordmark" href="#">
-              AR<span>Space</span>
+              Furnova
             </a>
-            <p className="muted">Furniture you can place in your room before you buy it. A portfolio project by Anza Arain.</p>
+            <p className="muted">Sofas, beds, tables and desks made to order, that you can see in your room before you buy.</p>
           </div>
           <nav aria-label="Shop">
             <h2>Shop</h2>
+            <a href="#shop">All furniture</a>
             <a href="#shop-sofas">Sofas</a>
             <a href="#shop-beds">Beds</a>
             <a href="#shop-tables">Tables</a>
@@ -136,8 +166,8 @@ export default function App() {
             <a href="#cart">Cart</a>
           </nav>
           <div>
-            <h2>Delivery</h2>
-            <p className="muted">Free standard delivery on orders over $500. Express in 2 days. 30-day returns on every piece.</p>
+            <h2>Help</h2>
+            <p className="muted">Free standard delivery on orders over $500, express in 2 days, and 30-day returns on every piece.</p>
           </div>
         </div>
         <div className="wrap footer-base">

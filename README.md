@@ -1,13 +1,18 @@
-# ARSpace
+# Furnova
 
 **Live demo:** https://anza-arain.github.io/arspace/
 
-A web-based 3D and AR product showroom. Customers configure furniture and objects in an interactive 3D viewer and, on a supported phone, place them in their own room at true scale.
+Furnova is an online furniture store where every sofa, bed, table and desk is a live 3D model. Customers pick fabric, wood and size, check exact measurements, and place the piece in their own room through the phone camera before they order.
 
 Built with **React, Three.js, `<model-viewer>` and WebXR**. No 3D files ship with the app: every product is generated procedurally in Three.js and exported to glTF in the browser when the user opens AR.
 
 ## Features
 
+- **Room sets on the home page**: living room, bedroom, study and dining scenes built from catalog pieces, with a room total and one-click "Add the room to cart"
+- **Shop page** with category, price and material filters, sorting, and pagination
+- **Product cards** with Trending, Premium and New labels, colour dots that re-render the picture in that colour, and quick add to cart
+- **Search panel** (search icon or Ctrl/Cmd + K) with live results and keyboard navigation
+- **Recently viewed** row on the home page
 - **Interactive 3D viewer** with orbit, zoom, soft shadows and studio lighting (Three.js, PBR materials, `RoomEnvironment` reflections)
 - **Live configurator**: colour, material and product options rebuild the model instantly; price updates with each choice
 - **Real dimensions** in centimetres, measured from the model's bounding box
@@ -32,6 +37,7 @@ npm run dev        # http://localhost:5173
 npm run build      # static site in dist/
 node src/route.test.js     # URL parser self-check
 node src/account.test.js   # password hashing, validation, cart totals
+node src/paging.test.js    # shop pagination
 ```
 
 Deploy `dist/` to Vercel, Netlify or GitHub Pages. Hash routing means no server rewrites are needed.
@@ -54,7 +60,9 @@ src/
     Stage.jsx           React wrapper around the Three.js viewer
   components/           ProductCard, Options (swatches, segmented choices), ARModal
   components/Header.jsx promo bar, menus, search, cart and account menu
-  pages/                Home, Product, Saved, Auth (sign in / sign up), Cart, Checkout, Account + Order
+  three/rooms.js        furnished room sets for the home page
+  paging.js             page numbers for the shop (+ paging.test.js)
+  pages/                Home, Shop, Product, Saved, Auth (sign in / sign up), Cart, Checkout, Account + Order
 ```
 
 ## How the AR pipeline works
