@@ -5,13 +5,14 @@
 //   #orbit-c2-m1-o0   product "orbit" with colour 2, finish 1, option 0
 //   #orbit-c2-m1-o0-ar  same, opening straight into the AR view (used by the QR code)
 //   #login #signup #account #cart #checkout   store pages
+//   #admin            admin panel (admin account only)
 //   #order-AS1X2Y     order confirmation
 //   #shop             catalog page
 //   #shop-lighting    catalog filtered to a category
 import { byId, CATEGORIES, DEFAULT_CFG } from './data/products.js'
 
 const KEYS = { c: 'color', m: 'finish', o: 'option' }
-const PAGES = ['saved', 'login', 'signup', 'account', 'cart', 'checkout']
+const PAGES = ['saved', 'login', 'signup', 'account', 'cart', 'checkout', 'admin']
 
 export function parseHash(hash) {
   const h = hash.replace(/^#/, '')

@@ -83,8 +83,28 @@ export function cartTotals(cart, delivery = 'standard') {
   return { count, subtotal, shipping, total: subtotal + shipping }
 }
 
+// Demo admin account, so the admin panel works on a fresh browser.
+// Email admin@furnova.store, password Furnova@2026 (stored only as this salted hash).
+export const ADMIN_EMAIL = 'admin@furnova.store'
+const ADMIN = {
+  name: 'Furnova Admin',
+  email: ADMIN_EMAIL,
+  role: 'admin',
+  salt: '84DA7zgS3MGNhvwxJzYVmw==',
+  hash: 'BsOSoc0IZtJLU/UR9MueNd+weT2eA22LlVZPm6FUyIQ=',
+  joined: 0,
+  saved: [],
+  cart: [],
+  orders: [],
+}
+
+export const ORDER_STATUSES = ['Processing', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled']
+
 export function useAccount() {
-  const [users, setUsers] = useState(() => read(USERS, {}))
+  const [users, setUsers] = useState(() => {
+    const all = read(USERS, {})
+    return all[ADMIN_EMAIL] ? all : { ...all, [ADMIN_EMAIL]: ADMIN }
+  })
   const [email, setEmail] = useState(() => read(SESSION, null))
   useEffect(() => write(USERS, users), [users])
   useEffect(() => write(SESSION, email), [email])
@@ -111,6 +131,17 @@ export function useAccount() {
 
   return {
     user,
+    isAdmin: user?.role === 'admin',
+    users, // every account in this browser, for the admin panel
+    // Admin: move an order to a new status, with a dated history entry.
+    setOrderStatus: (email, orderId, status) =>
+      setUsers((all) => ({
+        ...all,
+        [email]: {
+          ...all[email],
+          orders: all[email].orders.map((o) => (o.id === orderId ? { ...o, status, history: [...(o.history ?? []), { status, at: Date.now() }] } : o)),
+        },
+      })),
     signup,
     login,
     logout: () => setEmail(null),

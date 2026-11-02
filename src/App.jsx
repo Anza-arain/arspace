@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { parseHash, toHash } from './route.js'
 import { cartTotals, useAccount } from './account.js'
 import Header from './components/Header.jsx'
+import Footer from './components/Footer.jsx'
+import Admin from './pages/Admin.jsx'
 import Home from './pages/Home.jsx'
 import Shop from './pages/Shop.jsx'
 import Product from './pages/Product.jsx'
@@ -18,6 +20,7 @@ const PRIVATE = {
   checkout: 'Sign in to check out.',
   account: 'Sign in to see your account and orders.',
   order: 'Sign in to see this order.',
+  admin: 'Sign in with the admin account to manage the store.',
 }
 
 export default function App() {
@@ -132,50 +135,17 @@ export default function App() {
   else if (route.page === 'checkout') page = <Checkout account={account} />
   else if (route.page === 'account') page = <Account account={account} onLogout={logout} />
   else if (route.page === 'order') page = <Order order={user.orders.find((o) => o.id === route.id)} user={user} />
+  else if (route.page === 'admin') page = account.isAdmin ? <Admin account={account} notify={notify} /> : <Auth mode="login" account={account} message="This page is for the store admin. Sign in with the admin account." />
   else if (route.page === 'shop') page = <Shop {...store} category={route.category} query={query} setQuery={setQuery} />
   else page = <Home {...store} recent={recent} />
 
   return (
     <>
-      <Header user={user} cartCount={user ? cartTotals(user.cart).count : 0} savedCount={saved.length} route={route} onSearch={setQuery} onLogout={logout} />
+      <Header user={user} isAdmin={account.isAdmin} cartCount={user ? cartTotals(user.cart).count : 0} savedCount={saved.length} route={route} onSearch={setQuery} onLogout={logout} />
 
       <main>{page}</main>
 
-      <footer className="site-footer">
-        <div className="wrap footer-grid">
-          <div>
-            <a className="wordmark" href="#">
-              Furnova
-            </a>
-            <p className="muted">Sofas, beds, tables and desks made to order, that you can see in your room before you buy.</p>
-          </div>
-          <nav aria-label="Shop">
-            <h2>Shop</h2>
-            <a href="#shop">All furniture</a>
-            <a href="#shop-sofas">Sofas</a>
-            <a href="#shop-beds">Beds</a>
-            <a href="#shop-tables">Tables</a>
-            <a href="#shop-desks">Study desks</a>
-            <a href="#shop-lighting">Lighting</a>
-          </nav>
-          <nav aria-label="Your account">
-            <h2>Your account</h2>
-            {user ? <a href="#account">Orders</a> : <a href="#login">Sign in</a>}
-            {!user && <a href="#signup">Create account</a>}
-            <a href="#saved">Saved</a>
-            <a href="#cart">Cart</a>
-          </nav>
-          <div>
-            <h2>Help</h2>
-            <p className="muted">Free standard delivery on orders over $500, express in 2 days, and 30-day returns on every piece.</p>
-          </div>
-        </div>
-        <div className="wrap footer-base">
-          <span>
-            Made with <span className="heart" aria-label="love">❤</span> by Anza
-          </span>
-        </div>
-      </footer>
+      <Footer user={user} />
 
       <div className="toast" role="status" aria-live="polite" data-show={toast.show ? '' : undefined}>
         {toast.text}
